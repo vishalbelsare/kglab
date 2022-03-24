@@ -1,6 +1,40 @@
 
+import sys
+import time
+
 from icecream import ic
+import pandas as pd
 import numpy as np
+
+# measure use of pandas.DataFrame
+start_time = time.time()
+
+df = pd.DataFrame({
+    "src": pd.Series(dtype="int"),
+    "rel": pd.Series(dtype="int"),
+    "dst": pd.Series(dtype="object"),
+    "lit": pd.Series(dtype="bool"),
+    "ctx": pd.Series(dtype="str"),
+})
+
+df.loc[0] = [ 4, 5, 3, True, "B" ]
+df.loc[1] = [ 2, 3, 1, False, "A" ]
+df.loc[2] = [ 3, 4, "wow", True, "A" ]
+df.loc[3] = [ 1, 2, 3, True, "A" ]
+
+ic(df)
+
+for row in df.itertuples():
+    ic(row)
+
+rows = df.index[(df["src"] == 3) & (df["dst"] == "wow")]
+ic(rows)
+ic(rows[0])
+
+millisec = (time.time() - start_time) * 1000.0
+ic(millisec)
+
+sys.exit(0)
 
 x = np.empty(shape=[0, 1], dtype=object)
 x = np.append(x, "foo")
@@ -10,24 +44,3 @@ ic(x[0])
 
 #np.array([ "foo", "bar" ])
 ic(np.where(x == "bar"))
-
-t = np.array([
-    [ 1, 2, 3, "foo" ],
-    [ 2, 3, 4, "bar" ],
-    [ 5, 6, 7, "hello" ],
-    [ 8, 9, 1, "bar" ],
-])
-
-add_row = np.array([ 4, 5, 6, "wow" ])
-t = np.vstack([t, add_row])
-ic(t)
-
-ic(t[0, 3])
-
-
-rows = np.where(t[:,3] == "bar")
-ic(type(rows[0]))
-ic(len(rows[0]))
-ic(rows)
-ic(rows[0][0])
-ic(t[rows])

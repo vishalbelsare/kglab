@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Storage plugin for RDFlib
+An RDFlib.Store plugin backed by NumPy, SciPy, and pandas data
+structures which are suitable for use with Dask Distributed.
 
 see license https://github.com/DerwenAI/kglab#license-and-copyright
 """
@@ -15,6 +16,7 @@ from cryptography.hazmat.primitives import hashes  # type: ignore  # pylint: dis
 from icecream import ic  # type: ignore  # pylint: disable=E0401,W0611
 import chocolate  # type: ignore  # pylint: disable=E0401
 import numpy as np  # type: ignore  # pylint: disable=E0401
+import pandas as pd  # type: ignore  # pylint: disable=E0401
 
 from rdflib.store import Store  # type: ignore # pylint: disable=E0401
 import rdflib  # type: ignore  # pylint: disable=E0401
@@ -32,7 +34,8 @@ Represent a reference to a Node within this store.
 
 class PropertyStore (Store):
     """
-A subclass of `rdflib.Store` to use as a plugin, integrating the W3C stack.
+A subclass of `rdflib.Store` to use as a plugin, integrating the W3C
+stack with a labeled property graph.
     """
 
     def __init__ (
@@ -54,7 +57,15 @@ Instance constructor.
         self.__namespace: dict = {}
         self.__prefix: dict = {}
 
-        self._tuples: list = []
+        # tuple format: src, rel, dst, lit, ctx
+        self._tuples: pd.DataFrame = pd.DataFrame({
+            "src": pd.Series(dtype="int"),
+            "rel": pd.Series(dtype="int"),
+            "dst": pd.Series(dtype="object"),
+            "lit": pd.Series(dtype="bool"),
+            "ctx": pd.Series(dtype="str"),
+        })
+
         self._node_names: np.array = np.empty(shape=[0, 1], dtype=object)
         self._rel_names: np.array = np.empty(shape=[0, 1], dtype=object)
 
@@ -168,9 +179,17 @@ Compose a tuple from the inputs supplied by `RDFlib`.
         """
 Locate the given tuple in the data, returning `-1` if not found.
         """
-        try:
-            idx = self._tuples.index(_tuple)
-        except ValueError as ex:  # pylint: disable=W0612
+        rows = self._tuples.index[
+            (self._tuples["src"] == _tuple[0]) &
+            (self._tuples["rel"] == _tuple[1]) &
+            (self._tuples["dst"] == _tuple[2]) &
+            (self._tuples["lit"] == _tuple[3]) &
+            (self._tuples["ctx"] == _tuple[4])
+        ]
+
+        if len(rows) > 0:
+            idx = rows[0]
+        else:
             # triple does not exist
             idx = -1
 
@@ -201,7 +220,7 @@ the store is not formula-aware.
         idx = self._find(_tuple)
 
         if idx < 0:
-            self._tuples.append(_tuple)
+            self._tuples.loc[len(self._tuples)] = _tuple
 
             # update digest
             if self.digest is not None:
@@ -230,7 +249,7 @@ Remove the set of triples matching the pattern from the store.
         idx = self._find(_tuple)
 
         if idx >= 0:
-            del self._tuples[idx]
+            self._tuples.drop(idx)
 
             # update digest
             if self.digest is not None:
@@ -276,21 +295,21 @@ A conjunctive query can be indicated by either providing a value of None, or a s
         else:
             c = str(context.identifier)  # type: ignore
 
-        #_tuple = ( s, p, o, o_lit, c, )
+        #_tuple = ( s, p, o, lit, c, )
 
-        for src, rel, dst, o_lit, ctx in self._tuples:  # pylint: disable=R1702
-            if (s is None) or (s == src):
-                if (p is None) or (p == rel):
-                    if (o is None) or (o == dst):
-                        if (c is None) or (c == ctx):
-                            if o_lit:
-                                dst_ref: typing.Any = rdflib.term.Literal(dst)
+        for row in self._tuples.itertuples():  # pylint: disable=R1702
+            if (s is None) or (s == row.src):
+                if (p is None) or (p == row.rel):
+                    if (o is None) or (o == row.dst):
+                        if (c is None) or (c == row.ctx):
+                            if row.lit:
+                                dst_ref: typing.Any = rdflib.term.Literal(row.dst)
                             else:
-                                dst_ref = self.get_node_name(dst)
+                                dst_ref = self.get_node_name(row.dst)
 
                             triple_result = (
-                                rdflib.term.URIRef(self.get_node_name(src)),
-                                rdflib.term.URIRef(self.get_rel_name(rel)),
+                                rdflib.term.URIRef(self.get_node_name(row.src)),
+                                rdflib.term.URIRef(self.get_rel_name(row.rel)),
                                 dst_ref,
                             )
 
@@ -312,14 +331,9 @@ context given.
 a graph instance to query or None
         """
         if context is None:
-            return len(self._tuples)
-
-        c = str(context.identifier)  # type: ignore
-        count = 0
-
-        for _, _, _, _, ctx in self._tuples:
-            if c == ctx:
-                count += 1
+            count = len(self._tuples)
+        else:
+            count = self._tuples[self._tuples.ctx == context].shape[0]
 
         return count
 
@@ -330,7 +344,7 @@ a graph instance to query or None
         """
 Returns the set of contexts
         """
-        return { ctx for _, _, _, _, ctx in self._tuples }
+        return set(self._tuples.ctx.unique())
 
 
     def bind (
