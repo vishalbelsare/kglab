@@ -37,11 +37,8 @@ keywords = [
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
     "Development Status :: 5 - Production/Stable",
@@ -57,13 +54,14 @@ classifiers = [
 ]
 
 exclude = [
-    "tests/rdf_tests/*"
+    "tests/rdf_tests/*",
+    "archive/*",
 ]
 
 
 [tool.poetry.dependencies]
 
-python = "^3.11"
+python = ">=3.11,<3.13"
 rdflib = "^7.1.4"
 csvwlib = "^0.3.2"
 morph-kgc = "^2.8.1"
@@ -78,12 +76,12 @@ python-dateutil = "^2.9.0.post0"
 icecream = "^2.1.7"
 cryptography = "^45.0.6"
 pynvml = "^12.0.0"
-urlpath = "^1.2.0"
 requests = "^2.32.5"
 gcsfs = "^2025.7.0"
 pyarrow = "^21.0.0"
 tqdm = "^4.67.1"
 igraph = "^0.11.9"
+apeye = "^1.4.1"
 
 
 [tool.poetry.group.dev.dependencies]

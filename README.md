@@ -1,6 +1,6 @@
 # kglab
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6360664.svg)](https://doi.org/10.5281/zenodo.6360664)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4416034.svg)](https://doi.org/10.5281/zenodo.4416034)
 ![Licence](https://img.shields.io/github/license/DerwenAI/kglab)
 ![Repo size](https://img.shields.io/github/repo-size/DerwenAI/kglab)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/DerwenAI/kglab?style=plastic)
@@ -13,7 +13,7 @@
 Welcome to *Graph Data Science*:
 <https://derwen.ai/docs/kgl/>
 
-The **kglab** library provides a simple abstraction layer in Python 3.7+
+The **kglab** library provides a simple abstraction layer in Python 3.11-3.12
 for building knowledge graphs, leveraging Pandas, NetworkX, RAPIDS, RDFLib,
 Morph-KGC, and many more.
 
@@ -159,7 +159,7 @@ this library.
   title = {{kglab: a simple abstraction layer in Python for building knowledge graphs}},
   year = 2020,
   publisher = {Derwen},
-  doi = {10.5281/zenodo.6360664},
+  doi = {10.5281/zenodo.4416034},
   url = {https://github.com/DerwenAI/kglab}
 }
 ```
